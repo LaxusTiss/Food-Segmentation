@@ -103,6 +103,41 @@ The user-facing interface is built with Gradio and supports direct image upload 
 
 ---
 
+## Model Selection Rationale
+
+The project keeps the final demo lightweight around Mask2Former, but the experiments compare three complementary segmentation directions: SegFormer-B5, Mask2Former Swin-Tiny, and a custom HDF SwinV2-FPN model. This choice is useful because FoodSeg103 is not just a normal object-recognition task. The original FoodSeg103 paper emphasizes that food images need fine-grained ingredient masks and are difficult because ingredients can overlap, appear in small regions, or look visually different across dishes. Therefore, the project needs models that can handle both pixel-level detail and broader context.
+
+### SegFormer-B5
+
+SegFormer-B5 was selected as a strong supervised semantic segmentation baseline. SegFormer combines a hierarchical Transformer encoder with a simple MLP decoder, which is suitable for dense prediction because it can aggregate multi-scale features while keeping the decoder relatively simple. The SegFormer paper reports strong results on common segmentation benchmarks and highlights the benefit of combining local and global attention for semantic segmentation. In this project, SegFormer-B5 is also convenient for a Hugging Face-style training and demo pipeline because the processor, config, label maps, and model artifact can be saved and reloaded cleanly.
+
+### Mask2Former Swin-Tiny
+
+Mask2Former Swin-Tiny was selected because it represents a different segmentation strategy: mask-level prediction instead of only classifying each pixel independently. The Mask2Former paper proposes masked attention and shows that one architecture can work across semantic, instance, and panoptic segmentation. This is a good fit for food images, where ingredients often appear as irregular regions rather than isolated rectangular objects. In the project results, Mask2Former also achieved the best mIoU among the tested models, so it became the main checkpoint used by the Gradio upload demo.
+
+### HDF SwinV2-FPN
+
+HDF SwinV2-FPN was included as the custom model branch. SwinV2 is a strong vision backbone designed to scale better to larger model capacity and higher image resolution, while FPN-style decoders are a common choice for recovering multi-scale spatial details. The project adds a Food Co-occurrence Module to reflect a food-specific observation: ingredients are not independent, because classes such as rice, meat, sauce, vegetables, and noodles often appear in meaningful combinations. This branch is useful as the project's own architectural contribution, even though it still needs more tuning such as weighted loss, larger input size, and more complete artifact saving.
+
+### Why These Three Together?
+
+Using the three models together gives the project a fairer comparison:
+
+- **SegFormer-B5** tests a strong pixel-level Transformer segmentation baseline.
+- **Mask2Former Swin-Tiny** tests mask-level learning and provides the best current demo checkpoint.
+- **HDF SwinV2-FPN** tests a custom food-aware design with multi-scale features and co-occurrence reasoning.
+
+This combination makes the project stronger than using a single model only: it compares a stable baseline, a high-performing mask-based architecture, and a self-designed architecture tailored to the food domain.
+
+### Supporting References
+
+- FoodSeg103 benchmark: [A Large-Scale Benchmark for Food Image Segmentation](https://arxiv.org/abs/2105.05409)
+- SegFormer: [SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203)
+- Mask2Former: [Masked-attention Mask Transformer for Universal Image Segmentation](https://arxiv.org/abs/2112.01527)
+- Swin Transformer V2: [Swin Transformer V2: Scaling Up Capacity and Resolution](https://arxiv.org/abs/2111.09883)
+
+---
+
 ## Tech Stack
 
 | Layer | Technologies | Role |
